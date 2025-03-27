@@ -1,5 +1,39 @@
 let weather = {
     apiKey: "e2c1d873e17655abe9c9bdf6946db59d",
+    
+    fetchWeather: function(city) {
+        // Auto-append country code if missing
+        let apiCity = city;
+        if (!city.includes(",")) {
+            if (city.toLowerCase() === "sydney") apiCity = "Sydney,AU";
+            if (city.toLowerCase() === "melbourne") apiCity = "Melbourne,AU";
+        }
+        
+        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${apiCity}&units=metric&appid=${this.apiKey}`)
+            .then(response => {
+                if (!response.ok) throw new Error(`City "${city}" not found. Try "City, Country" format.`);
+                return response.json();
+            })
+            .then(data => this.displayWeather(data))
+            .catch(error => {
+                console.error("API Error:", error);
+                alert(error.message);
+            });
+    },
+    
+    // ... rest of your existing code ...
+};
+
+
+
+
+
+
+
+
+
+let weather = {
+    apiKey: "e2c1d873e17655abe9c9bdf6946db59d",
     currentCity: "",
     timeInterval: null,
     
