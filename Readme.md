@@ -3,6 +3,7 @@ A sleek, responsive weather application with dynamic animated backgrounds
 
 Weather App Screenshot
 Example: Weather in Toronto with misty conditions
+![alt text](Capture.JPG)
 
 Features ✨
 ✅ Real-Time Weather Data – Temperature, humidity, wind speed, and conditions (e.g., sunny, rainy)
