@@ -7,100 +7,18 @@ body {
     justify-content: center;
     align-items: center;
     background: linear-gradient(135deg, #3E5151, #DECBA4);
-    transition: background 0.5s ease;
     overflow: hidden;
+    position: relative;
 }
 
-.weather-container {
+.weather-animations {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     z-index: -1;
-    pointer-events: none;
-}
-
-/* Weather Elements */
-.sun {
-    position: absolute;
-    top: 10%;
-    right: 10%;
-    width: 80px;
-    height: 80px;
-    background: #FFD700;
-    border-radius: 50%;
-    box-shadow: 0 0 50px #FFA500;
-    animation: pulse 3s infinite alternate;
-}
-
-.cloud {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 50px;
-    width: 100px;
-    height: 40px;
-    animation: drift linear infinite;
-}
-
-.cloud::before, .cloud::after {
-    content: '';
-    position: absolute;
-    background: inherit;
-    border-radius: 50%;
-}
-
-.cloud::before {
-    width: 50px;
-    height: 50px;
-    top: -25px;
-    left: 15px;
-}
-
-.cloud::after {
-    width: 30px;
-    height: 30px;
-    top: -15px;
-    right: 15px;
-}
-
-.rain-drop {
-    position: absolute;
-    width: 2px;
-    height: 15px;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.7));
-    animation: rain 1s linear infinite;
-}
-
-.lightning {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: white;
-    opacity: 0;
-    animation: lightning 8s infinite;
-}
-
-/* Animations */
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(1.1); opacity: 1; }
-}
-
-@keyframes drift {
-    0% { transform: translateX(-150px); }
-    100% { transform: translateX(calc(100vw + 150px)); }
-}
-
-@keyframes rain {
-    0% { transform: translateY(-100vh); }
-    100% { transform: translateY(100vh); }
-}
-
-@keyframes lightning {
-    0%, 95% { opacity: 0; }
-    96% { opacity: 0.8; }
-    100% { opacity: 0; }
+    overflow: hidden;
 }
 
 /* Card Styles */
@@ -145,19 +63,19 @@ body {
 
 .weather {
     position: relative;
+    min-height: 300px;
 }
 
-.weather.loading {
-    visibility: hidden;
+.loading .weather-content {
+    display: none;
 }
 
-.weather.loading::after {
+.loading::after {
     content: "Loading...";
-    visibility: visible;
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .icon {
@@ -177,7 +95,233 @@ body {
     margin-bottom: 0.5em;
 }
 
-.humidity, .wind, .precipitation, .time {
+.humidity, .wind, .time {
     margin: 0.3em 0;
     font-size: 0.95em;
+}
+
+.error-message {
+    color: #ff4444;
+    padding: 1em;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    margin-top: 1em;
+}
+
+/* Weather Elements */
+.weather-element {
+    position: absolute;
+    will-change: transform;
+}
+
+/* Sun Styles */
+.sun {
+    width: 80px;
+    height: 80px;
+    background: #FFD700;
+    border-radius: 50%;
+    box-shadow: 
+        0 0 50px #FFA500,
+        0 0 80px #FF8C00;
+    animation: pulse 3s infinite alternate;
+    top: 15%;
+    right: 15%;
+    z-index: 1;
+}
+
+/* Cloud Styles - Completely Revised */
+.cloud {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50px;
+    width: 120px;
+    height: 40px;
+    position: relative;
+    filter: blur(1.5px);
+    animation: drift linear infinite;
+    z-index: 2;
+}
+
+.cloud::before, 
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    filter: blur(1.5px);
+}
+
+.cloud::before {
+    width: 60px;
+    height: 60px;
+    top: -30px;
+    left: 15px;
+}
+
+.cloud::after {
+    width: 40px;
+    height: 40px;
+    top: -20px;
+    right: 15px;
+}
+
+/* Cumulus Cloud - Big fluffy clouds */
+.cumulus-cloud {
+    width: 180px;
+    height: 60px;
+    border-radius: 60px;
+}
+
+.cumulus-cloud::before {
+    width: 100px;
+    height: 100px;
+    top: -50px;
+    left: 20px;
+}
+
+.cumulus-cloud::after {
+    width: 70px;
+    height: 70px;
+    top: -40px;
+    right: 20px;
+}
+
+/* Stratus Cloud - Wide, flat clouds */
+.stratus-cloud {
+    width: 250px;
+    height: 50px;
+    border-radius: 25px;
+    opacity: 0.85;
+}
+
+.stratus-cloud::before {
+    width: 120px;
+    height: 70px;
+    top: -35px;
+    left: 30px;
+    border-radius: 35px;
+}
+
+.stratus-cloud::after {
+    width: 100px;
+    height: 60px;
+    top: -30px;
+    right: 30px;
+    border-radius: 30px;
+}
+
+/* Cirrus Cloud - Thin, wispy clouds */
+.cirrus-cloud {
+    width: 200px;
+    height: 30px;
+    border-radius: 15px;
+    opacity: 0.7;
+    filter: blur(2px);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.cirrus-cloud::before,
+.cirrus-cloud::after {
+    background: rgba(255, 255, 255, 0.8);
+    filter: blur(2px);
+}
+
+.cirrus-cloud::before {
+    width: 120px;
+    height: 40px;
+    top: -20px;
+    left: 20px;
+    border-radius: 20px;
+}
+
+.cirrus-cloud::after {
+    width: 90px;
+    height: 30px;
+    top: -15px;
+    right: 20px;
+    border-radius: 15px;
+}
+
+/* Additional Weather Elements */
+.rain-drop {
+    width: 2px;
+    height: 20px;
+    background: rgba(173, 216, 230, 0.7);
+    position: absolute;
+    animation: rain linear infinite;
+}
+
+.snowflake {
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    animation: snow linear infinite;
+    filter: blur(0.5px);
+}
+
+.lightning {
+    position: absolute;
+    width: 8px;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, #ffff00, transparent);
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: lightning 5s linear infinite;
+    opacity: 0;
+    filter: blur(1px);
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes drift {
+    0% { 
+        transform: translateX(-200px) translateY(0);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% { 
+        transform: translateX(calc(100vw + 200px)) translateY(15px);
+        opacity: 0.8;
+    }
+}
+
+@keyframes rain {
+    0% { transform: translateY(-100vh); }
+    100% { transform: translateY(100vh); }
+}
+
+@keyframes snow {
+    0% { 
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 0.8;
+    }
+    100% { 
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0.2;
+    }
+}
+
+@keyframes lightning {
+    0%, 95% { opacity: 0; }
+    96% { 
+        opacity: 0.8;
+        height: 60px;
+    }
+    98% {
+        opacity: 0.4;
+        height: 100px;
+    }
+    100% { 
+        opacity: 0;
+        height: 80px;
+    }
 }

@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kenya Weather App</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Global Weather App</title>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="weather-container"></div>
+    <div class="weather-animations"></div>
     
     <div class="card">
         <div class="search">
-            <input type="text" class="search-bar" placeholder="Search Kenyan city...">
+            <input type="text" class="search-bar" placeholder="Search city (e.g., London, GB)">
             <button>
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" height="1em" width="1em">
                     <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 011.415 0l3.85 3.85a1 1 0 01-1.414 1.415l-3.85-3.85a1 1 0 010-1.415z" clip-rule="evenodd"></path>
@@ -21,15 +21,14 @@
             </button>
         </div>
         
-        <div class="weather loading">
+        <div class="weather">
             <h2 class="city">Weather in Nairobi, KE</h2>
             <img class="icon" src="" alt="Weather icon">
             <h1 class="temp">24°C</h1>
             <div class="description">Partly cloudy</div>
             <div class="humidity">Humidity: 65%</div>
             <div class="wind">Wind: 10 km/h</div>
-            <div class="precipitation">Precip: 0mm/h</div>
-            <div class="time">Local: 02:30 PM</div>
+            <div class="time">Local: --:-- --</div>
         </div>
     </div>
 
