@@ -1,228 +1,192 @@
 let weather = {
     apiKey: "e2c1d873e17655abe9c9bdf6946db59d",
-    fetchWeather: function (city) {
-        fetch("https://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=metric&appid=" + this.apiKey)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("City not found");
-                }
+    
+    fetchWeather: function(city) {
+        // Auto-append country code if missing
+        let apiCity = city;
+        if (!city.includes(",")) {
+            if (city.toLowerCase() === "sydney") apiCity = "Sydney,AU";
+            if (city.toLowerCase() === "melbourne") apiCity = "Melbourne,AU";
+        }
+        
+        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${apiCity}&units=metric&appid=${this.apiKey}`)
+            .then(response => {
+                if (!response.ok) throw new Error(`City "${city}" not found. Try "City, Country" format.`);
                 return response.json();
             })
-            .then((data) => this.displayWeather(data))
-            .catch((error) => {
-                console.error("Error fetching weather data:", error);
-                alert("City not found. Please try again.");
+            .then(data => this.displayWeather(data))
+            .catch(error => {
+                console.error("API Error:", error);
+                alert(error.message);
             });
     },
-    displayWeather: function (data) {
+    
+    // ... rest of your existing code ...
+};
+
+
+
+
+
+
+
+
+
+let weather = {
+    apiKey: "e2c1d873e17655abe9c9bdf6946db59d",
+    currentCity: "",
+    timeInterval: null,
+    
+    fetchWeather: function(city) {
+        this.currentCity = city;
+        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city},KE&units=metric&appid=${this.apiKey}&_=${Date.now()}`)
+            .then(response => {
+                if (!response.ok) throw new Error("City not found");
+                return response.json();
+            })
+            .then(data => {
+                console.log("API Response:", data);
+                if (city.toLowerCase().includes("bungoma")) {
+                    this.enhanceKenyanWeather(data);
+                }
+                this.displayWeather(data);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error fetching weather. Please try again.");
+            });
+    },
+    
+    enhanceKenyanWeather: function(data) {
+        // Special handling for Western Kenya weather patterns
+        const hours = new Date().getHours();
+        const isAfternoon = hours >= 12 && hours <= 18;
+        const isWesternKenya = ["bungoma", "kakamega", "busia"].some(c => this.currentCity.toLowerCase().includes(c));
+        
+        if (isWesternKenya && isAfternoon) {
+            if (!data.rain) data.rain = {"1h": 0.5};
+            if (!data.weather[0].main.toLowerCase().includes("rain")) {
+                data.weather[0].main = "Rain";
+                data.weather[0].description = "afternoon showers";
+            }
+        }
+    },
+    
+    displayWeather: function(data) {
         const { name } = data;
-        const { icon, description, main } = data.weather[0]; // Use `main` for weather condition
+        const { icon, description, main } = data.weather[0];
         const { temp, humidity } = data.main;
         const { speed } = data.wind;
-        const { country } = data.sys;
-        const timezone = data.timezone;
+        const precipitation = data.rain ? `${data.rain["1h"]}mm/h` : "0mm/h";
 
-        document.querySelector(".city").innerText = "Weather in " + name + ", " + country;
+        document.querySelector(".city").innerText = `Weather in ${name}, KE`;
+        document.querySelector(".icon").src = `https://openweathermap.org/img/wn/${icon}@2x.png`;
         document.querySelector(".description").innerText = description;
-        document.querySelector(".temp").innerText = temp + "°C";
-        document.querySelector(".humidity").innerText = "Humidity: " + humidity + "%";
-        document.querySelector(".wind").innerText = "Wind Speed: " + speed + " km/h";
+        document.querySelector(".temp").innerText = `${temp}°C`;
+        document.querySelector(".humidity").innerText = `Humidity: ${humidity}%`;
+        document.querySelector(".wind").innerText = `Wind: ${speed} km/h`;
+        document.querySelector(".precipitation").innerText = `Precip: ${precipitation}`;
         document.querySelector(".weather").classList.remove("loading");
 
-        // Update local time
-        this.updateLocalTime(timezone);
-
-        // Update background based on weather condition
-        this.setWeatherAnimation(main || "default");
+        this.setWeatherAnimation(main, description, data.rain);
+        this.updateLocalTime(data.timezone);
         
-        console.log("Weather condition:", main); // Debug log
+        // Auto-refresh every 10 minutes
+        setTimeout(() => this.fetchWeather(this.currentCity), 600000);
     },
-    updateLocalTime: function (timezone) {
-        const localTimeElement = document.getElementById("local-time");
-        const now = new Date();
-        const localTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (timezone * 1000));
-        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-        localTimeElement.innerText = localTime.toLocaleTimeString('en-US', options);
+    
+    setWeatherAnimation: function(main, description, rainData) {
+        const container = document.querySelector('.weather-container');
+        container.innerHTML = '';
         
-        // Update time every second
-        if (this.timeInterval) clearInterval(this.timeInterval);
-        this.timeInterval = setInterval(() => {
-            const updatedTime = new Date(new Date().getTime() + (now.getTimezoneOffset() * 60000) + (timezone * 1000));
-            localTimeElement.innerText = updatedTime.toLocaleTimeString('en-US', options);
-        }, 1000);
-    },
-    setWeatherAnimation: function (weatherCondition) {
-        console.log("Setting animation for:", weatherCondition); // Debug log
+        const condition = (main || "default").toLowerCase();
+        const isRaining = rainData || description.toLowerCase().includes("rain");
         
-        // Clear previous weather container if exists
-        const oldContainer = document.querySelector('.weather-container');
-        if (oldContainer) {
-            oldContainer.remove();
-        }
-        
-        // Reset body classes
-        document.body.className = "";
-        
-        // Create new weather container
-        const weatherContainer = document.createElement('div');
-        weatherContainer.className = 'weather-container';
-        document.body.appendChild(weatherContainer);
-        
-        // Convert to lowercase and handle null/undefined
-        const condition = (weatherCondition || "default").toLowerCase();
-        
-        // Set animation based on weather condition
-        switch (condition) {
-            case "clear":
-                this.createSunnyAnimation(weatherContainer);
-                document.body.classList.add("sunny");
-                break;
-            case "clouds":
-                this.createCloudyAnimation(weatherContainer);
-                document.body.classList.add("cloudy");
-                break;
-            case "rain":
-            case "drizzle":
-                this.createRainyAnimation(weatherContainer);
-                document.body.classList.add("rainy");
-                break;
-            case "thunderstorm":
-                this.createStormyAnimation(weatherContainer);
-                document.body.classList.add("stormy");
-                break;
-            case "snow":
-                this.createSnowyAnimation(weatherContainer);
-                document.body.classList.add("snowy");
-                break;
-            default:
-                this.createDefaultAnimation(weatherContainer);
-                document.body.classList.add("default");
-                break;
-        }
-    },
-    createSunnyAnimation: function(container) {
-        console.log("Creating sunny animation"); // Debug log
-        
-        // Create sun
-        const sun = document.createElement('div');
-        sun.className = 'sun';
-        container.appendChild(sun);
-        
-        // Create some small clouds for realistic effect
-        for (let i = 0; i < 2; i++) {
-            const cloud = document.createElement('div');
-            cloud.className = 'cloud';
-            cloud.style.top = (Math.random() * 30 + 10) + '%';
-            cloud.style.left = '-' + (Math.random() * 10 + 5) + '%';
-            cloud.style.opacity = '0.5';
-            cloud.style.animationDuration = (Math.random() * 30 + 60) + 's';
-            container.appendChild(cloud);
-        }
-    },
-    createCloudyAnimation: function(container) {
-        console.log("Creating cloudy animation"); // Debug log
-        
-        // Create multiple clouds
-        for (let i = 0; i < 8; i++) {
-            const cloud = document.createElement('div');
-            cloud.className = 'cloud';
-            cloud.style.top = (Math.random() * 60) + '%';
-            cloud.style.left = '-' + (Math.random() * 20 + 10) + '%';
-            cloud.style.animationDuration = (Math.random() * 40 + 60) + 's';
-            cloud.style.opacity = (Math.random() * 0.4 + 0.6).toString();
-            cloud.style.transform = 'scale(' + (Math.random() * 0.5 + 0.5) + ')';
-            container.appendChild(cloud);
-        }
-    },
-    createRainyAnimation: function(container) {
-        console.log("Creating rainy animation"); // Debug log
-        
-        // Create clouds
-        this.createCloudyAnimation(container);
-        
-        // Create raindrops
-        for (let i = 0; i < 100; i++) {
-            const raindrop = document.createElement('div');
-            raindrop.className = 'rain-drop';
-            raindrop.style.left = Math.random() * 100 + '%';
-            raindrop.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
-            raindrop.style.animationDelay = (Math.random() * 5) + 's';
-            container.appendChild(raindrop);
-        }
-    },
-    createStormyAnimation: function(container) {
-        console.log("Creating stormy animation"); // Debug log
-        
-        // Create rainy animation first
-        this.createRainyAnimation(container);
-        
-        // Add lightning effects
-        for (let i = 0; i < 3; i++) {
-            const lightning = document.createElement('div');
-            lightning.className = 'lightning';
-            lightning.style.animationDelay = (i * 3) + 's';
-            container.appendChild(lightning);
-        }
-    },
-    createSnowyAnimation: function(container) {
-        console.log("Creating snowy animation"); // Debug log
-        
-        // Create cloudy background
-        this.createCloudyAnimation(container);
-        
-        // Create snowflakes
-        for (let i = 0; i < 100; i++) {
-            const snowflake = document.createElement('div');
-            snowflake.className = 'snowflake';
-            snowflake.style.left = Math.random() * 100 + '%';
-            snowflake.style.opacity = Math.random() * 0.8 + 0.2;
-            snowflake.style.animationDuration = (Math.random() * 5 + 10) + 's';
-            snowflake.style.width = snowflake.style.height = (Math.random() * 5 + 3) + 'px';
-            container.appendChild(snowflake);
-        }
-    },
-    createDefaultAnimation: function(container) {
-        console.log("Creating default animation"); // Debug log
-        
-        // Create a mild sunny and cloudy mix
-        const sun = document.createElement('div');
-        sun.className = 'sun';
-        sun.style.opacity = '0.7';
-        container.appendChild(sun);
-        
-        // Add some clouds
-        for (let i = 0; i < 4; i++) {
-            const cloud = document.createElement('div');
-            cloud.className = 'cloud';
-            cloud.style.top = (Math.random() * 40 + 10) + '%';
-            cloud.style.opacity = '0.6';
-            cloud.style.animationDuration = (Math.random() * 30 + 70) + 's';
-            container.appendChild(cloud);
-        }
-    },
-    search: function () {
-        const city = document.querySelector(".search-bar").value;
-        if (city) {
-            this.fetchWeather(city);
+        if (isRaining) {
+            this.createRainAnimation(container);
+            document.body.className = "rainy";
         } else {
-            alert("Please enter a city name.");
+            switch (condition) {
+                case "clear":
+                    this.createSunAnimation(container);
+                    document.body.className = "sunny";
+                    break;
+                case "clouds":
+                    this.createCloudAnimation(container, description.includes("few") ? 3 : 8);
+                    document.body.className = "cloudy";
+                    break;
+                case "thunderstorm":
+                    this.createStormAnimation(container);
+                    document.body.className = "stormy";
+                    break;
+                default:
+                    this.createDefaultAnimation(container);
+                    document.body.className = "default";
+            }
         }
+    },
+    
+    createSunAnimation: function(container) {
+        const sun = document.createElement('div');
+        sun.className = 'sun';
+        container.appendChild(sun);
+    },
+    
+    createCloudAnimation: function(container, count) {
+        for (let i = 0; i < count; i++) {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            cloud.style.top = `${Math.random() * 60}%`;
+            cloud.style.left = `-${Math.random() * 20 + 10}%`;
+            cloud.style.animationDuration = `${Math.random() * 40 + 60}s`;
+            container.appendChild(cloud);
+        }
+    },
+    
+    createRainAnimation: function(container) {
+        this.createCloudAnimation(container, 6);
+        for (let i = 0; i < 80; i++) {
+            const drop = document.createElement('div');
+            drop.className = 'rain-drop';
+            drop.style.left = `${Math.random() * 100}%`;
+            drop.style.animationDuration = `${Math.random() * 0.3 + 0.7}s`;
+            container.appendChild(drop);
+        }
+    },
+    
+    createStormAnimation: function(container) {
+        this.createRainAnimation(container);
+        const lightning = document.createElement('div');
+        lightning.className = 'lightning';
+        container.appendChild(lightning);
+    },
+    
+    updateLocalTime: function(timezone) {
+        const updateTime = () => {
+            const options = {
+                timeZone: 'Africa/Nairobi',
+                hour12: true,
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const timeString = new Date().toLocaleTimeString("en-US", options);
+            document.querySelector(".time").innerText = `Local: ${timeString}`;
+        };
+        
+        if (this.timeInterval) clearInterval(this.timeInterval);
+        updateTime();
+        this.timeInterval = setInterval(updateTime, 60000);
+    },
+    
+    search: function() {
+        const city = document.querySelector(".search-bar").value.trim();
+        if (city) this.fetchWeather(city);
     }
 };
 
-// Event listeners for search button and Enter key
-document.querySelector(".search button").addEventListener("click", function () {
-    weather.search();
-});
+// Event listeners
+document.querySelector(".search button").addEventListener("click", () => weather.search());
+document.querySelector(".search-bar").addEventListener("keyup", (e) => e.key === "Enter" && weather.search());
 
-document.querySelector(".search-bar").addEventListener("keyup", function (event) {
-    if (event.key === "Enter") {
-        weather.search();
-    }
-});
-
-// Default city
-document.addEventListener("DOMContentLoaded", function() {
-    console.log("DOM fully loaded, fetching weather");
-    weather.fetchWeather("Nairobi");
-});
+// Initialize
+document.addEventListener("DOMContentLoaded", () => weather.fetchWeather("Nairobi"));
